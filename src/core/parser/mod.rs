@@ -20,10 +20,11 @@ impl Parser {
     fn parse_display(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
-            header == "drDefineDisplay(",
+            header == "drDefineDisplay",
             "Expected drDefineDisplay, got {}",
             header
         );
+        assert!(self.reader.next_word().unwrap().unwrap() == "(");
         while self.reader.is_stack_empty() == false {
             let word = self.reader.next_word().unwrap().unwrap();
             if word == "(" || word == ")" {
@@ -37,10 +38,11 @@ impl Parser {
     fn parse_color(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
-            header == "drDefineColor(",
+            header == "drDefineColor",
             "Expected drDefineColor, got {}",
             header
         );
+        assert!(self.reader.next_word().unwrap().unwrap() == "(");
         let mut params: Vec<String> = Vec::with_capacity(6);
         while self.reader.stack.len() >= 1 {
             let word = self.reader.next_word().unwrap().unwrap();
@@ -72,10 +74,11 @@ impl Parser {
     fn parse_stipple(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
-            header == "drDefineStipple(",
+            header == "drDefineStipple",
             "Expected drDefineStipple, got {}",
             header
         );
+        assert!(self.reader.next_word().unwrap().unwrap() == "(");
         let mut params = Vec::with_capacity(2);
         let mut bitmap: Vec<Vec<u8>> = Vec::new();
         let mut bitmap_row: Vec<u8> = Vec::new();
@@ -130,10 +133,11 @@ impl Parser {
     fn parse_linestyle(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
-            header == "drDefineLineStyle(",
+            header == "drDefineLineStyle",
             "Expected drDefineLineStyle, got {}",
             header
         );
+        assert!(self.reader.next_word().unwrap().unwrap() == "(");
         let mut params = Vec::with_capacity(3);
         let mut pattern: Vec<u8> = Vec::new();
         while self.reader.stack.len() >= 1 {
@@ -177,10 +181,11 @@ impl Parser {
     fn parse_packet(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
-            header == "drDefinePacket(",
+            header == "drDefinePacket",
             "Expected drDefinePacket, got {}",
             header
         );
+        assert!(self.reader.next_word().unwrap().unwrap() == "(");
         let mut params = Vec::with_capacity(7);
         while self.reader.stack.len() >= 1 {
             let word = self.reader.next_word().unwrap().unwrap();
@@ -212,19 +217,18 @@ impl Parser {
 
     pub fn parse(&mut self) {
         let mut token = self.reader.peek_word();
-
         while token.is_ok() && token.as_ref().unwrap().is_some() {
             match token.unwrap() {
                 Some(word) => {
-                    if word == "drDefineDisplay(" {
+                    if word == "drDefineDisplay" {
                         self.parse_display();
-                    } else if word == "drDefineColor(" {
+                    } else if word == "drDefineColor" {
                         self.parse_color();
-                    } else if word == "drDefineStipple(" {
+                    } else if word == "drDefineStipple" {
                         self.parse_stipple();
-                    } else if word == "drDefineLineStyle(" {
+                    } else if word == "drDefineLineStyle" {
                         self.parse_linestyle();
-                    } else if word == "drDefinePacket(" {
+                    } else if word == "drDefinePacket" {
                         self.parse_packet();
                     } else {
                         break;
@@ -243,9 +247,9 @@ mod tests {
 
     #[test]
     fn test01() {
-        let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/hh180.drf";
+        let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/t65.drf";
         let mut parser = Parser::new(path).unwrap();
         parser.parse();
-        println!("{:#?}", parser.drf.get("psb").unwrap());
+        println!("{:#?}", parser.drf);
     }
 }

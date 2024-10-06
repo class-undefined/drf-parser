@@ -35,12 +35,27 @@ impl FileStreamReader {
                 self.current_line.truncate(comment_start);
             }
             self.current_line = self.current_line.trim_end().to_string();
-            let words = self
-                .current_line
-                .split_whitespace()
-                .filter(|word| !word.is_empty())
-                .map(|word| word.to_string())
-                .collect::<VecDeque<_>>();
+            let mut words = VecDeque::new();
+            let mut current_word = String::new();
+            for ch in self.current_line.chars() {
+                if ch.is_whitespace() {
+                    if !current_word.is_empty() {
+                        words.push_back(current_word.clone());
+                        current_word.clear();
+                    }
+                } else if ch == '(' || ch == ')' {
+                    if !current_word.is_empty() {
+                        words.push_back(current_word.clone());
+                        current_word.clear();
+                    }
+                    words.push_back(ch.to_string());
+                } else {
+                    current_word.push(ch);
+                }
+            }
+            if !current_word.is_empty() {
+                words.push_back(current_word);
+            }
             self.current_words = words;
         }
         Ok(self.current_words.pop_front().map(|word| {
@@ -60,12 +75,27 @@ impl FileStreamReader {
                 self.current_line.truncate(comment_start);
             }
             self.current_line = self.current_line.trim_end().to_string();
-            let words = self
-                .current_line
-                .split_whitespace()
-                .filter(|word| !word.is_empty())
-                .map(|word| word.to_string())
-                .collect::<VecDeque<_>>();
+            let mut words = VecDeque::new();
+            let mut current_word = String::new();
+            for ch in self.current_line.chars() {
+                if ch.is_whitespace() {
+                    if !current_word.is_empty() {
+                        words.push_back(current_word.clone());
+                        current_word.clear();
+                    }
+                } else if ch == '(' || ch == ')' {
+                    if !current_word.is_empty() {
+                        words.push_back(current_word.clone());
+                        current_word.clear();
+                    }
+                    words.push_back(ch.to_string());
+                } else {
+                    current_word.push(ch);
+                }
+            }
+            if !current_word.is_empty() {
+                words.push_back(current_word);
+            }
             self.current_words = words;
         }
         Ok(self.current_words.front())
