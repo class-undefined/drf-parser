@@ -41,20 +41,61 @@ impl Parser {
             "Expected drDefineColor, got {}",
             header
         );
+        let mut params: Vec<String> = Vec::with_capacity(6);
+        while self.reader.stack.len() >= 1 {
+            let word = self.reader.next_word().unwrap().unwrap();
+            if word == ")" && self.reader.stack.len() == 0 {
+                break;
+            }
+            if word == "(" {
+                continue;
+            }
+            if word == ")" {
+                if self.reader.stack.len() == 0 {
+                    break;
+                }
+                let display = params[0].clone();
+                let color = ast::color::Color::from_vec(&params);
+                self.drf
+                    .get_mut(&display)
+                    .unwrap()
+                    .colors
+                    .insert(color.name.clone(), color);
+                params.clear();
+
+                continue;
+            }
+            params.push(word);
+        }
+    }
+
+    fn parse_stipple(&mut self) {
+        let header = self.reader.next_word().unwrap().unwrap();
+        assert!(
+            header == "drDefineStipple(",
+            "Expected drDefineStipple, got {}",
+            header
+        );
+        todo!("parse_stipple");
     }
 
     pub fn parse(&mut self) {
-        let token = self.reader.peek_word();
+        let mut token = self.reader.peek_word();
+        while token.is_ok() {
+            match token.unwrap() {
+                Some(word) => {
+                    if word == "drDefineDisplay(" {
+                        self.parse_display();
+                    } else if word == "drDefineColor(" {
+                        self.parse_color();
+                    }
+                }
+                None => (),
+            }
+            token = self.reader.peek_word();
+        }
         if token.is_err() {
             panic!("{:?}", token.err().unwrap());
-        }
-        match token.unwrap() {
-            Some(word) => {
-                if word == "drDefineDisplay(" {
-                    self.parse_display();
-                }
-            }
-            None => (),
         }
     }
 }
