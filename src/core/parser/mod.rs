@@ -76,7 +76,57 @@ impl Parser {
             "Expected drDefineStipple, got {}",
             header
         );
-        todo!("parse_stipple");
+        let mut params = Vec::with_capacity(2);
+        let mut bitmap: Vec<Vec<u8>> = Vec::new();
+        let mut bitmap_row: Vec<u8> = Vec::new();
+        let mut row = 0usize;
+        while self.reader.stack.len() >= 1 {
+            let word = self.reader.next_word().unwrap().unwrap();
+            if word == "(" {
+                continue;
+            }
+            if word == ")" {
+                if self.reader.stack.len() == 3 {
+                    // 3: bitmap a row close
+                    bitmap.push(bitmap_row.clone());
+                    // 无需清空bitmap_row, 会在下一次循环中重新赋值
+                    row += 1;
+                    continue;
+                }
+                if self.reader.stack.len() == 2 {
+                    // 2: bitmap close
+                    let stipple = ast::stipple::Stipple::from_vec(&params, row, bitmap);
+                    self.drf
+                        .get_mut(&params[0])
+                        .unwrap()
+                        .stipples
+                        .insert(stipple.name.clone(), stipple);
+                    params.clear();
+                    bitmap = Vec::new();
+                    row = 0;
+                    continue;
+                }
+                // 1: stipple close
+                if self.reader.stack.len() == 0 {
+                    // drf close
+                    break;
+                }
+            }
+            if self.reader.stack.len() == 2 {
+                // DisplayName     StippleName
+                params.push(word);
+                continue;
+            }
+            if self.reader.stack.len() == 3 {
+                bitmap_row = Vec::new();
+                continue;
+            }
+            if self.reader.stack.len() == 4 {
+                for c in word.chars() {
+                    bitmap_row.push(c.to_digit(10).unwrap() as u8);
+                }
+            }
+        }
     }
 
     pub fn parse(&mut self) {
@@ -88,14 +138,15 @@ impl Parser {
                         self.parse_display();
                     } else if word == "drDefineColor(" {
                         self.parse_color();
+                    } else if word == "drDefineStipple(" {
+                        self.parse_stipple();
+                    } else {
+                        break;
                     }
                 }
                 None => (),
             }
             token = self.reader.peek_word();
-        }
-        if token.is_err() {
-            panic!("{:?}", token.err().unwrap());
         }
     }
 }

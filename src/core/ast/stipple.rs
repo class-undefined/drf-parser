@@ -1,17 +1,23 @@
 pub struct Stipple {
     pub name: String,
-    pub bit_map: Vec<Vec<u8>>,
-    pub width: usize,
-    pub height: usize,
+    pub bitmap: Vec<Vec<u8>>,
+    pub row: usize,
+    pub col: usize,
 }
 
 impl Stipple {
-    pub fn new(name: String, bit_map: Vec<Vec<u8>>, width: usize, height: usize) -> Self {
+    pub fn new(name: String, bitmap: Vec<Vec<u8>>, row: usize, col: usize) -> Self {
         Stipple {
             name,
-            bit_map,
-            width,
-            height,
+            bitmap,
+            row,
+            col,
         }
+    }
+
+    pub fn from_vec(params: &Vec<String>, row: usize, bitmap: Vec<Vec<u8>>) -> Self {
+        let name = params[1].clone();
+        let col = bitmap[0].len();
+        Stipple::new(name, bitmap, row, col)
     }
 }
