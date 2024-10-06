@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::fmt::{Debug, Formatter, Result};
 
 use super::{color::Color, line_style::LineStyle, packet::Packet, stipple::Stipple};
 
@@ -19,5 +20,15 @@ impl Drf {
             line_styles: HashMap::new(),
             packets: HashMap::new(),
         }
+    }
+}
+
+impl Debug for Drf {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        let s = format!(
+            "Drf(name={:?}, colors={:?}, stipples={:?}, line_styles={:?}, packets={:?})",
+            self.name, self.colors, self.stipples, self.line_styles, self.packets,
+        );
+        write!(f, "Drf: {}", s)
     }
 }

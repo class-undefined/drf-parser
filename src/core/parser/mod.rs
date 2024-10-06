@@ -89,13 +89,14 @@ impl Parser {
                 if self.reader.stack.len() == 3 {
                     // 3: bitmap a row close
                     bitmap.push(bitmap_row.clone());
+                    bitmap_row = Vec::new();
                     // 无需清空bitmap_row, 会在下一次循环中重新赋值
                     row += 1;
                     continue;
                 }
                 if self.reader.stack.len() == 2 {
                     // 2: bitmap close
-                    let stipple = ast::stipple::Stipple::from_vec(&params, row, bitmap);
+                    let stipple = ast::stipple::Stipple::from_vec(&params, row, bitmap.clone());
                     self.drf
                         .get_mut(&params[0])
                         .unwrap()
@@ -111,14 +112,11 @@ impl Parser {
                     // drf close
                     break;
                 }
+                continue;
             }
             if self.reader.stack.len() == 2 {
                 // DisplayName     StippleName
                 params.push(word);
-                continue;
-            }
-            if self.reader.stack.len() == 3 {
-                bitmap_row = Vec::new();
                 continue;
             }
             if self.reader.stack.len() == 4 {
@@ -129,9 +127,93 @@ impl Parser {
         }
     }
 
+    fn parse_linestyle(&mut self) {
+        let header = self.reader.next_word().unwrap().unwrap();
+        assert!(
+            header == "drDefineLineStyle(",
+            "Expected drDefineLineStyle, got {}",
+            header
+        );
+        let mut params = Vec::with_capacity(3);
+        let mut pattern: Vec<u8> = Vec::new();
+        while self.reader.stack.len() >= 1 {
+            let word = self.reader.next_word().unwrap().unwrap();
+            if word == "(" {
+                continue;
+            }
+            if word == ")" {
+                if self.reader.stack.len() == 2 {
+                    // 2: pattern close
+                    let linestyle = ast::line_style::LineStyle::from_vec(&params, pattern);
+                    self.drf
+                        .get_mut(&params[0])
+                        .unwrap()
+                        .line_styles
+                        .insert(linestyle.name.clone(), linestyle);
+                    params.clear();
+                    pattern = Vec::new();
+                    continue;
+                }
+                // 1: linestyle close
+                if self.reader.stack.len() == 0 {
+                    // drf close
+                    break;
+                }
+                continue;
+            }
+            if self.reader.stack.len() == 2 {
+                // DisplayName     LineStyleName
+                params.push(word);
+                continue;
+            }
+            if self.reader.stack.len() == 3 {
+                for c in word.chars() {
+                    pattern.push(c.to_digit(10).unwrap() as u8);
+                }
+            }
+        }
+    }
+
+    fn parse_packet(&mut self) {
+        let header = self.reader.next_word().unwrap().unwrap();
+        assert!(
+            header == "drDefinePacket(",
+            "Expected drDefinePacket, got {}",
+            header
+        );
+        let mut params = Vec::with_capacity(7);
+        while self.reader.stack.len() >= 1 {
+            let word = self.reader.next_word().unwrap().unwrap();
+            if word == "(" {
+                continue;
+            }
+            if word == ")" {
+                if self.reader.stack.len() == 1 {
+                    // 2: packet close
+                    let packet = ast::packet::Packet::from_vec(&params);
+                    self.drf
+                        .get_mut(&params[0])
+                        .unwrap()
+                        .packets
+                        .insert(packet.name.clone(), packet);
+                    params.clear();
+                    continue;
+                }
+                // 1: packet close
+                if self.reader.stack.len() == 0 {
+                    // drf close
+                    break;
+                }
+                continue;
+            }
+            params.push(word);
+        }
+    }
+
     pub fn parse(&mut self) {
         let mut token = self.reader.peek_word();
-        while token.is_ok() {
+
+        while token.is_ok() && token.as_ref().unwrap().is_some() {
             match token.unwrap() {
                 Some(word) => {
                     if word == "drDefineDisplay(" {
@@ -140,6 +222,10 @@ impl Parser {
                         self.parse_color();
                     } else if word == "drDefineStipple(" {
                         self.parse_stipple();
+                    } else if word == "drDefineLineStyle(" {
+                        self.parse_linestyle();
+                    } else if word == "drDefinePacket(" {
+                        self.parse_packet();
                     } else {
                         break;
                     }
@@ -153,12 +239,13 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use crate::core::parser::{reader, Parser};
+    use crate::core::parser::Parser;
 
     #[test]
     fn test01() {
         let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/hh180.drf";
         let mut parser = Parser::new(path).unwrap();
         parser.parse();
+        println!("{:#?}", parser.drf.get("psb").unwrap());
     }
 }

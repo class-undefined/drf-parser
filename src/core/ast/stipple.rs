@@ -1,3 +1,5 @@
+use std::fmt::{Debug, Formatter, Result};
+
 pub struct Stipple {
     pub name: String,
     pub bitmap: Vec<Vec<u8>>,
@@ -19,5 +21,15 @@ impl Stipple {
         let name = params[1].clone();
         let col = bitmap[0].len();
         Stipple::new(name, bitmap, row, col)
+    }
+}
+
+impl Debug for Stipple {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(
+            f,
+            "Stipple(name={}, row={}, col={})",
+            self.name, self.row, self.col
+        )
     }
 }
