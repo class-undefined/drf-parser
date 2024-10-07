@@ -1,22 +1,37 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::{self, BufRead, BufReader},
+};
 
 use super::ast;
 
 pub mod reader;
 
-pub struct Parser {
+pub struct Parser<R: BufRead> {
     pub drf: HashMap<String, ast::drf::Drf>,
-    pub reader: reader::FileStreamReader,
+    pub reader: reader::FileStreamReader<R>,
 }
 
-impl Parser {
-    pub fn new(path: &str) -> std::io::Result<Self> {
+impl Parser<BufReader<File>> {
+    pub fn from_path(filename: &str) -> io::Result<Self> {
         Ok(Parser {
             drf: HashMap::new(),
-            reader: reader::FileStreamReader::new(path)?,
+            reader: reader::FileStreamReader::from_path(filename)?,
         })
     }
+}
 
+impl<'a> Parser<BufReader<&'a [u8]>> {
+    pub fn from_string(content: &'a str) -> Self {
+        Parser {
+            drf: HashMap::new(),
+            reader: reader::FileStreamReader::from_string(content),
+        }
+    }
+}
+
+impl<R: BufRead> Parser<R> {
     fn parse_display(&mut self) {
         let header = self.reader.next_word().unwrap().unwrap();
         assert!(
@@ -243,12 +258,25 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use std::{fs::File, io::Read};
+
     use crate::core::parser::Parser;
 
     #[test]
     fn test01() {
-        let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/t65.drf";
-        let mut parser = Parser::new(path).unwrap();
+        let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/FreePDK3.drf";
+        let mut parser = Parser::from_path(path).unwrap();
+        parser.parse();
+        println!("{:#?}", parser.drf);
+    }
+
+    #[test]
+    fn test02() {
+        let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/FreePDK3.drf";
+        let mut file = File::open(path).unwrap();
+        let mut buffer = String::new();
+        file.read_to_string(&mut buffer);
+        let mut parser = Parser::from_string(buffer.as_str());
         parser.parse();
         println!("{:#?}", parser.drf);
     }

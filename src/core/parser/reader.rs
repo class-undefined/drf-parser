@@ -3,25 +3,36 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::path::Path;
 
-pub struct FileStreamReader {
-    reader: BufReader<File>,
+pub struct FileStreamReader<R: BufRead> {
+    reader: R,
     current_line: String,
     current_words: VecDeque<String>,
     pub stack: Vec<char>,
 }
+impl FileStreamReader<BufReader<File>> {
+    pub fn from_path(filename: &str) -> io::Result<Self> {
+        let file = File::open(Path::new(filename))?;
+        Ok(FileStreamReader::new(BufReader::new(file)))
+    }
+}
 
-impl FileStreamReader {
-    pub fn new(filename: &str) -> io::Result<Self> {
-        let path = Path::new(filename);
-        let file = File::open(&path)?;
-        let reader = BufReader::new(file);
+impl<'a> FileStreamReader<BufReader<&'a [u8]>> {
+    pub fn from_string(content: &'a str) -> Self {
+        FileStreamReader::new(BufReader::new(content.as_bytes()))
+    }
+}
 
-        Ok(FileStreamReader {
+impl<R> FileStreamReader<R>
+where
+    R: BufRead,
+{
+    pub fn new(reader: R) -> Self {
+        FileStreamReader {
             reader,
             current_line: String::new(),
             current_words: VecDeque::new(),
             stack: Vec::new(),
-        })
+        }
     }
 
     pub fn next_word(&mut self) -> io::Result<Option<String>> {
@@ -135,7 +146,7 @@ mod tests {
     #[test]
     fn test01() {
         let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/s180bcd.drf";
-        let mut reader = super::FileStreamReader::new(path).unwrap();
+        let mut reader = super::FileStreamReader::from_path(path).unwrap();
         let word = reader.next_word().unwrap().unwrap();
         println!("{:?}", word);
     }
