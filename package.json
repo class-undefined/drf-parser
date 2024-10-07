@@ -1,0 +1,21 @@
+{
+  "name": "@class-undefined/drf-parser",
+  "version": "0.1.1",
+  "files": [
+    "drf_parser_bg.wasm",
+    "drf_parser.js",
+    "drf_parser_bg.js",
+    "drf_parser.d.ts"
+  ],
+  "description": "A DRF parser.",
+  "homepage": "https://github.com/class-undefined/drf-parser.git",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/class-undefined/drf-parser.git"
+  },
+  "author": "class-undefined",
+  "license": "MIT",
+  "module": "drf_parser.js",
+  "types": "drf_parser.d.ts",
+  "sideEffects": false
+}
