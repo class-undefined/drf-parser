@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter, Result};
 
+use serde::Serialize;
+
 use super::{color::Color, line_style::LineStyle, packet::Packet, stipple::Stipple};
 
+#[derive(Clone, Serialize)]
 pub struct Drf {
     pub name: String,
     pub colors: HashMap<String, Color>,
@@ -20,6 +23,10 @@ impl Drf {
             line_styles: HashMap::new(),
             packets: HashMap::new(),
         }
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
 

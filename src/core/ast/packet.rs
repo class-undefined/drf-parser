@@ -1,5 +1,8 @@
 use std::fmt::{Debug, Formatter, Result};
 
+use serde::Serialize;
+
+#[derive(Clone, Serialize)]
 pub struct Packet {
     pub name: String,
     pub stipple: String,
@@ -43,6 +46,10 @@ impl Packet {
             };
         }
         panic!("Invalid packet parameters: {:?}", params);
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
 

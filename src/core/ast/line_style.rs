@@ -1,4 +1,6 @@
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct LineStyle {
     pub name: String,
     pub width: u32,
@@ -20,5 +22,9 @@ impl LineStyle {
             width: params[2].parse::<u32>().unwrap(),
             pattern,
         }
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }

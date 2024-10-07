@@ -258,7 +258,10 @@ impl<R: BufRead> Parser<R> {
 
 #[cfg(test)]
 mod tests {
-    use std::{fs::File, io::Read};
+    use std::{
+        fs::File,
+        io::{Read, Write},
+    };
 
     use crate::core::parser::Parser;
 
@@ -278,6 +281,8 @@ mod tests {
         file.read_to_string(&mut buffer);
         let mut parser = Parser::from_string(buffer.as_str());
         parser.parse();
-        println!("{:#?}", parser.drf);
+        let s = parser.drf.get("display").unwrap().to_json();
+        File::create("a.json").unwrap().write_all(s.as_bytes());
+        println!("{:#?}", parser.drf.get("display").unwrap().to_json());
     }
 }

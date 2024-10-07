@@ -1,21 +1,16 @@
-#[derive(Debug, Clone)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
 pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
+    pub rgb: [u8; 3],
     pub blink: bool,
     pub name: String,
 }
 
 impl Color {
     pub fn new(name: String, r: u8, g: u8, b: u8, blink: bool) -> Self {
-        Color {
-            r,
-            g,
-            b,
-            blink,
-            name,
-        }
+        let rgb = [r, g, b];
+        Color { rgb, blink, name }
     }
 
     pub fn from_vec(params: &Vec<String>) -> Self {
@@ -29,5 +24,9 @@ impl Color {
         } else {
             Color::new(name, r, g, b, false)
         }
+    }
+
+    pub fn to_json(&self) -> String {
+        serde_json::to_string(&self).unwrap()
     }
 }
