@@ -1,13 +1,12 @@
 {
   "name": "@class-undefined/drf-parser",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "files": [
     "drf_parser_bg.wasm",
     "drf_parser.js",
-    "drf_parser_bg.js",
     "drf_parser.d.ts"
   ],
-  "description": "A DRF parser.",
+  "description": "Parser for display.drf and layermap files",
   "homepage": "https://github.com/class-undefined/drf-parser.git",
   "repository": {
     "type": "git",

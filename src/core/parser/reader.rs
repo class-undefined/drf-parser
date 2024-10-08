@@ -8,17 +8,18 @@ pub struct FileStreamReader<R: BufRead> {
     current_line: String,
     current_words: VecDeque<String>,
     pub stack: Vec<char>,
+    comment_sign: Option<&'static str>,
 }
 impl FileStreamReader<BufReader<File>> {
-    pub fn from_path(filename: &str) -> io::Result<Self> {
+    pub fn from_path(filename: &str, comment_sign: Option<&'static str>) -> io::Result<Self> {
         let file = File::open(Path::new(filename))?;
-        Ok(FileStreamReader::new(BufReader::new(file)))
+        Ok(FileStreamReader::new(BufReader::new(file), comment_sign))
     }
 }
 
 impl<'a> FileStreamReader<BufReader<&'a [u8]>> {
-    pub fn from_string(content: &'a str) -> Self {
-        FileStreamReader::new(BufReader::new(content.as_bytes()))
+    pub fn from_string(content: &'a str, comment_sign: Option<&'static str>) -> Self {
+        FileStreamReader::new(BufReader::new(content.as_bytes()), comment_sign)
     }
 }
 
@@ -26,12 +27,13 @@ impl<R> FileStreamReader<R>
 where
     R: BufRead,
 {
-    pub fn new(reader: R) -> Self {
+    pub fn new(reader: R, comment_sign: Option<&'static str>) -> Self {
         FileStreamReader {
             reader,
             current_line: String::new(),
             current_words: VecDeque::new(),
             stack: Vec::new(),
+            comment_sign,
         }
     }
 
@@ -42,9 +44,14 @@ where
             if bytes_read == 0 {
                 return Ok(None);
             }
-            if let Some(comment_start) = self.current_line.find(';') {
-                self.current_line.truncate(comment_start);
+            if self.comment_sign.is_some() {
+                if let Some(comment_start) =
+                    self.current_line.find(self.comment_sign.as_ref().unwrap())
+                {
+                    self.current_line.truncate(comment_start);
+                }
             }
+
             self.current_line = self.current_line.trim_end().to_string();
             let mut words = VecDeque::new();
             let mut current_word = String::new();
@@ -82,8 +89,12 @@ where
             if bytes_read == 0 {
                 return Ok(None);
             }
-            if let Some(comment_start) = self.current_line.find(';') {
-                self.current_line.truncate(comment_start);
+            if self.comment_sign.is_some() {
+                if let Some(comment_start) =
+                    self.current_line.find(self.comment_sign.as_ref().unwrap())
+                {
+                    self.current_line.truncate(comment_start);
+                }
             }
             self.current_line = self.current_line.trim_end().to_string();
             let mut words = VecDeque::new();
@@ -146,7 +157,7 @@ mod tests {
     #[test]
     fn test01() {
         let path = "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/s180bcd.drf";
-        let mut reader = super::FileStreamReader::from_path(path).unwrap();
+        let mut reader = super::FileStreamReader::from_path(path, Some(";")).unwrap();
         let word = reader.next_word().unwrap().unwrap();
         println!("{:?}", word);
     }

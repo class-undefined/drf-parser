@@ -2,3 +2,4 @@
 *.drf
 .DS_Store
 pkg/
+*.layermap
