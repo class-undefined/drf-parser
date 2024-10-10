@@ -58,7 +58,12 @@ impl<R: BufRead> LayerMapParser<R> {
     }
 
     pub fn to_json(&self) -> String {
-        serde_json::to_string(&self.layermap).unwrap()
+        let mut layermap = HashMap::with_capacity(self.layermap.len());
+        for (k, v) in &self.layermap {
+            let key = format!("{}#{}", k.0, k.1);
+            layermap.insert(key, v);
+        }
+        serde_json::to_string(&layermap).unwrap()
     }
 }
 
@@ -72,6 +77,6 @@ mod tests {
             "/Users/class-undefined/code/rust/drf-parser/src/tests/pdks/tsmcN65.layermap",
         );
         parser.as_mut().unwrap().parse();
-        println!("{:?}", parser.as_ref().unwrap().layermap)
+        println!("{:?}", parser.as_ref().unwrap().to_json())
     }
 }
