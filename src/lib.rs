@@ -15,6 +15,15 @@ pub fn parse_layermap_file(path: &str) -> Result<String, Box<dyn Error>> {
     Ok(parser.to_json())
 }
 
+pub fn parse_lyp_file(path: &str) -> Result<(String, String), Box<dyn Error>> {
+    let output = core::parser::lyp::parse_lyp_file(path)?;
+    Ok((output.drf_json()?, output.layermap_json()?))
+}
+
+pub fn write_lyp_outputs(path: &str, output_dir: &str) -> Result<(), Box<dyn Error>> {
+    core::parser::lyp::write_lyp_outputs(path, output_dir)
+}
+
 #[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::*;
 

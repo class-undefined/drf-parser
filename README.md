@@ -13,9 +13,11 @@ npm install @class-undefined/drf-parser
 ```bash
 cargo run -- drf path/to/display.drf
 cargo run -- layermap path/to/layermap
+cargo run -- lyp path/to/layers.lyp path/to/output-dir
 ```
 
-The command prints JSON to stdout.
+The `drf` and `layermap` commands print JSON to stdout. The `lyp` command writes
+`display.drf.json` and `layermap.json` to the output directory.
 
 ### display.drf
 ```typescript
