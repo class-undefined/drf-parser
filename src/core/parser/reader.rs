@@ -8,18 +8,33 @@ pub struct FileStreamReader<R: BufRead> {
     current_line: String,
     current_words: VecDeque<String>,
     pub stack: Vec<char>,
-    comment_sign: Option<&'static str>,
+    comment_signs: Vec<&'static str>,
 }
 impl FileStreamReader<BufReader<File>> {
     pub fn from_path(filename: &str, comment_sign: Option<&'static str>) -> io::Result<Self> {
         let file = File::open(Path::new(filename))?;
         Ok(FileStreamReader::new(BufReader::new(file), comment_sign))
     }
+
+    pub fn from_path_with_comments(
+        filename: &str,
+        comment_signs: Vec<&'static str>,
+    ) -> io::Result<Self> {
+        let file = File::open(Path::new(filename))?;
+        Ok(FileStreamReader::new_with_comments(
+            BufReader::new(file),
+            comment_signs,
+        ))
+    }
 }
 
 impl<'a> FileStreamReader<BufReader<&'a [u8]>> {
     pub fn from_string(content: &'a str, comment_sign: Option<&'static str>) -> Self {
         FileStreamReader::new(BufReader::new(content.as_bytes()), comment_sign)
+    }
+
+    pub fn from_string_with_comments(content: &'a str, comment_signs: Vec<&'static str>) -> Self {
+        FileStreamReader::new_with_comments(BufReader::new(content.as_bytes()), comment_signs)
     }
 }
 
@@ -28,12 +43,17 @@ where
     R: BufRead,
 {
     pub fn new(reader: R, comment_sign: Option<&'static str>) -> Self {
+        let comment_signs = comment_sign.into_iter().collect();
+        FileStreamReader::new_with_comments(reader, comment_signs)
+    }
+
+    pub fn new_with_comments(reader: R, comment_signs: Vec<&'static str>) -> Self {
         FileStreamReader {
             reader,
             current_line: String::new(),
             current_words: VecDeque::new(),
             stack: Vec::new(),
-            comment_sign,
+            comment_signs,
         }
     }
 
@@ -44,13 +64,7 @@ where
             if bytes_read == 0 {
                 return Ok(None);
             }
-            if self.comment_sign.is_some() {
-                if let Some(comment_start) =
-                    self.current_line.find(self.comment_sign.as_ref().unwrap())
-                {
-                    self.current_line.truncate(comment_start);
-                }
-            }
+            self.truncate_comment();
 
             self.current_line = self.current_line.trim_end().to_string();
             let mut words = VecDeque::new();
@@ -89,13 +103,7 @@ where
             if bytes_read == 0 {
                 return Ok(None);
             }
-            if self.comment_sign.is_some() {
-                if let Some(comment_start) =
-                    self.current_line.find(self.comment_sign.as_ref().unwrap())
-                {
-                    self.current_line.truncate(comment_start);
-                }
-            }
+            self.truncate_comment();
             self.current_line = self.current_line.trim_end().to_string();
             let mut words = VecDeque::new();
             let mut current_word = String::new();
@@ -144,6 +152,17 @@ where
                 }
                 _ => {}
             }
+        }
+    }
+
+    fn truncate_comment(&mut self) {
+        if let Some(comment_start) = self
+            .comment_signs
+            .iter()
+            .filter_map(|sign| self.current_line.find(sign))
+            .min()
+        {
+            self.current_line.truncate(comment_start);
         }
     }
 

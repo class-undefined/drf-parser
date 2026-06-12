@@ -9,6 +9,14 @@ npm install @class-undefined/drf-parser
 ```
 
 ## Usage
+### CLI
+```bash
+cargo run -- drf path/to/display.drf
+cargo run -- layermap path/to/layermap
+```
+
+The command prints JSON to stdout.
+
 ### display.drf
 ```typescript
 import wasmURL from "@class-undefined/drf-parser/drf_parser_bg.wasm?url"

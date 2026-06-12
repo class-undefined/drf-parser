@@ -11,7 +11,10 @@ pub struct LayerMapParser<R: BufRead> {
 
 impl LayerMapParser<BufReader<File>> {
     pub fn from_path(filename: &str) -> io::Result<Self> {
-        let reader = crate::core::parser::reader::FileStreamReader::from_path(filename, Some("#"))?;
+        let reader = crate::core::parser::reader::FileStreamReader::from_path_with_comments(
+            filename,
+            vec!["#", ";"],
+        )?;
         Ok(LayerMapParser {
             layermap: HashMap::new(),
             reader,
@@ -21,7 +24,10 @@ impl LayerMapParser<BufReader<File>> {
 
 impl<'a> LayerMapParser<BufReader<&'a [u8]>> {
     pub fn from_string(content: &'a str) -> Self {
-        let reader = crate::core::parser::reader::FileStreamReader::from_string(content, Some("#"));
+        let reader = crate::core::parser::reader::FileStreamReader::from_string_with_comments(
+            content,
+            vec!["#", ";"],
+        );
         LayerMapParser {
             layermap: HashMap::new(),
             reader,
@@ -35,7 +41,6 @@ impl<R: BufRead> LayerMapParser<R> {
         {
             let layer_name = self.reader.next_word().unwrap().unwrap();
             let purpose = self.reader.next_word().unwrap().unwrap();
-            println!("{}", self.reader.peek_word().unwrap().unwrap());
             let layer_number = self
                 .reader
                 .next_word()
@@ -70,6 +75,39 @@ impl<R: BufRead> LayerMapParser<R> {
 #[cfg(test)]
 mod tests {
     use super::LayerMapParser;
+
+    #[test]
+    fn parses_semicolon_and_hash_comments() {
+        let content = r#"
+; header comment
+0M drawing 1 0
+#CM drawing 51 0
+TE drawing 51 0
+BE drawing 58 0 ; inline comment
+"#;
+        let mut parser = LayerMapParser::from_string(content);
+        parser.parse();
+
+        assert_eq!(parser.layermap.len(), 3);
+        assert_eq!(
+            parser
+                .layermap
+                .get(&(String::from("0M"), String::from("drawing"))),
+            Some(&(1, 0))
+        );
+        assert_eq!(
+            parser
+                .layermap
+                .get(&(String::from("TE"), String::from("drawing"))),
+            Some(&(51, 0))
+        );
+        assert_eq!(
+            parser
+                .layermap
+                .get(&(String::from("BE"), String::from("drawing"))),
+            Some(&(58, 0))
+        );
+    }
 
     #[test]
     fn test01() {
